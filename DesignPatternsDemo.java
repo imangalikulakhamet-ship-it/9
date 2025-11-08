@@ -1,0 +1,241 @@
+// ===== DesignPatternsDemo.java =====
+import java.util.*;
+
+
+class TV {
+    public void on() {
+        System.out.println("📺 Телевизор қосылды.");
+    }
+
+    public void off() {
+        System.out.println("📴 Телевизор өшірілді.");
+    }
+
+    public void setChannel(int channel) {
+        System.out.println("🔢 Арна таңдалды: " + channel);
+    }
+}
+
+
+class AudioSystem {
+    private int volume = 5;
+
+    public void on() {
+        System.out.println("🔊 Аудиожүйе қосылды.");
+    }
+
+    public void off() {
+        System.out.println("🔇 Аудиожүйе өшірілді.");
+    }
+
+    public void setVolume(int level) {
+        this.volume = level;
+        System.out.println("🎚 Громкость орнатылды: " + volume);
+    }
+}
+
+
+class DVDPlayer {
+    public void play() {
+        System.out.println("▶️ Фильм ойнатылуда...");
+    }
+
+    public void pause() {
+        System.out.println("⏸ Фильм уақытша тоқтатылды.");
+    }
+
+    public void stop() {
+        System.out.println("⏹ Фильм тоқтатылды.");
+    }
+}
+
+class GameConsole {
+    public void on() {
+        System.out.println("🎮 Ойын консолі қосылды.");
+    }
+
+    public void startGame(String game) {
+        System.out.println("🕹 Ойын іске қосылды: " + game);
+    }
+}
+
+class HomeTheaterFacade {
+    private TV tv;
+    private AudioSystem audio;
+    private DVDPlayer dvd;
+    private GameConsole console;
+
+    public HomeTheaterFacade(TV tv, AudioSystem audio, DVDPlayer dvd, GameConsole console) {
+        this.tv = tv;
+        this.audio = audio;
+        this.dvd = dvd;
+        this.console = console;
+    }
+
+    public void watchMovie() {
+        System.out.println("\n🎬 Фильм көру режимі басталды:");
+        tv.on();
+        tv.setChannel(3);
+        audio.on();
+        audio.setVolume(7);
+        dvd.play();
+    }
+
+    public void listenToMusic() {
+        System.out.println("\n🎵 Музыка тыңдау режимі басталды:");
+        tv.on();
+        audio.on();
+        audio.setVolume(6);
+        System.out.println("📡 TV аудиокірісіне қосылды.");
+    }
+
+    // Ойын режимі
+    public void playGame(String game) {
+        System.out.println("\n🎮 Ойын режимі басталды:");
+        tv.on();
+        audio.on();
+        console.on();
+        console.startGame(game);
+    }
+
+    // Барлығын өшіру
+    public void shutdown() {
+        System.out.println("\n🔌 Барлық құрылғылар өшірілуде...");
+        dvd.stop();
+        audio.off();
+        tv.off();
+        System.out.println("✅ Жүйе сәтті өшірілді.");
+    }
+
+    // Дыбыс реттеу
+    public void setVolume(int level) {
+        audio.setVolume(level);
+    }
+}
+
+
+// ---------------------------
+// 2-БӨЛІМ: КОМПОНОВЩИК (COMPOSITE)
+// ---------------------------
+
+// Абстрактты компонент
+abstract class FileSystemComponent {
+    protected String name;
+
+    public FileSystemComponent(String name) {
+        this.name = name;
+    }
+
+    public abstract void display(String indent);
+    public abstract int getSize();
+}
+
+// Файл класы
+class File extends FileSystemComponent {
+    private int size;
+
+    public File(String name, int size) {
+        super(name);
+        this.size = size;
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "📄 Файл: " + name + " (" + size + "KB)");
+    }
+
+    @Override
+    public int getSize() {
+        return size;
+    }
+}
+
+// Папка класы
+class Directory extends FileSystemComponent {
+    private List<FileSystemComponent> components = new ArrayList<>();
+
+    public Directory(String name) {
+        super(name);
+    }
+
+    public void addComponent(FileSystemComponent component) {
+        if (!components.contains(component)) {
+            components.add(component);
+            System.out.println("➕ '" + component.name + "' папкаға қосылды: " + name);
+        } else {
+            System.out.println("⚠️ '" + component.name + "' бұдан бұрын бар.");
+        }
+    }
+
+    public void removeComponent(FileSystemComponent component) {
+        if (components.contains(component)) {
+            components.remove(component);
+            System.out.println("🗑 '" + component.name + "' өшірілді: " + name);
+        } else {
+            System.out.println("⚠️ '" + component.name + "' табылмады.");
+        }
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "📁 Папка: " + name);
+        for (FileSystemComponent c : components) {
+            c.display(indent + "   ");
+        }
+    }
+
+    @Override
+    public int getSize() {
+        int total = 0;
+        for (FileSystemComponent c : components) {
+            total += c.getSize();
+        }
+        return total;
+    }
+}
+
+
+
+public class DesignPatternsDemo {
+    public static void main(String[] args) {
+        // ====== ФАСАД ПАТТЕРНІ ======
+        TV tv = new TV();
+        AudioSystem audio = new AudioSystem();
+        DVDPlayer dvd = new DVDPlayer();
+        GameConsole console = new GameConsole();
+
+        HomeTheaterFacade homeTheater = new HomeTheaterFacade(tv, audio, dvd, console);
+
+        homeTheater.watchMovie();
+        homeTheater.setVolume(9);
+        homeTheater.playGame("Mortal Kombat");
+        homeTheater.listenToMusic();
+        homeTheater.shutdown();
+
+      
+        System.out.println("\n============================");
+        System.out.println("💾 ФАЙЛ ЖҮЙЕСІ ИЕРАРХИЯСЫ:");
+        System.out.println("============================");
+
+        Directory root = new Directory("Root");
+        Directory docs = new Directory("Құжаттар");
+        Directory pics = new Directory("Суреттер");
+
+        File f1 = new File("Реферат.docx", 120);
+        File f2 = new File("Есеп.xlsx", 80);
+        File p1 = new File("Фото1.jpg", 500);
+        File p2 = new File("Фото2.png", 750);
+
+        root.addComponent(docs);
+        root.addComponent(pics);
+
+        docs.addComponent(f1);
+        docs.addComponent(f2);
+
+        pics.addComponent(p1);
+        pics.addComponent(p2);
+
+        root.display("");
+        System.out.println("\n📦 Барлық жүйе көлемі: " + root.getSize() + "KB");
+    }
+}

@@ -1,0 +1,228 @@
+
+import java.util.*;
+
+
+class RoomBookingSystem {
+    private List<String> bookedRooms = new ArrayList<>();
+
+    public void bookRoom(String roomNumber) {
+        bookedRooms.add(roomNumber);
+        System.out.println("✅ Номер " + roomNumber + " сәтті брондалды.");
+    }
+
+    public void cancelBooking(String roomNumber) {
+        bookedRooms.remove(roomNumber);
+        System.out.println("❌ Номер " + roomNumber + " броньдан босатылды.");
+    }
+
+    public boolean isAvailable(String roomNumber) {
+        return !bookedRooms.contains(roomNumber);
+    }
+}
+
+class RestaurantSystem {
+    public void bookTable(String customerName) {
+        System.out.println("🍽 " + customerName + " үшін үстел брондалды.");
+    }
+
+    public void orderFood(String foodName) {
+        System.out.println("🍲 Тағамға тапсырыс берілді: " + foodName);
+    }
+
+    public void orderTaxi(String customerName) {
+        System.out.println("🚕 " + customerName + " үшін такси шақырылды.");
+    }
+}
+
+class EventManagementSystem {
+    public void bookConferenceHall(String eventName) {
+        System.out.println("🏛 Конференц-зал " + eventName + " үшін брондалды.");
+    }
+
+    public void orderEquipment(String equipment) {
+        System.out.println("💡 Жабдыққа тапсырыс берілді: " + equipment);
+    }
+}
+
+class CleaningService {
+    public void scheduleCleaning(String roomNumber) {
+        System.out.println("🧹 Номер " + roomNumber + " үшін тазалау кестеге қойылды.");
+    }
+
+    public void performCleaning(String roomNumber) {
+        System.out.println("✨ Номер " + roomNumber + " тазаланды.");
+    }
+}
+
+class HotelFacade {
+    private RoomBookingSystem roomBooking = new RoomBookingSystem();
+    private RestaurantSystem restaurant = new RestaurantSystem();
+    private EventManagementSystem events = new EventManagementSystem();
+    private CleaningService cleaning = new CleaningService();
+
+    public void bookRoomWithServices(String roomNumber, String foodName) {
+        if (roomBooking.isAvailable(roomNumber)) {
+            roomBooking.bookRoom(roomNumber);
+            restaurant.orderFood(foodName);
+            cleaning.scheduleCleaning(roomNumber);
+            System.out.println("✅ Толық қызметтер жиынтығы сәтті брондалды!\n");
+        } else {
+            System.out.println("❌ Бұл номер бос емес.\n");
+        }
+    }
+
+    public void organizeEvent(String eventName, String roomNumber, String equipment) {
+        events.bookConferenceHall(eventName);
+        events.orderEquipment(equipment);
+        roomBooking.bookRoom(roomNumber);
+        System.out.println("🎉 Іс-шара " + eventName + " сәтті ұйымдастырылды!\n");
+    }
+
+    public void bookTableWithTaxi(String customerName) {
+        restaurant.bookTable(customerName);
+        restaurant.orderTaxi(customerName);
+        System.out.println("🍷 " + customerName + " үшін үстел мен такси дайын!\n");
+    }
+
+    public void cancelRoomBooking(String roomNumber) {
+        roomBooking.cancelBooking(roomNumber);
+    }
+
+    public void requestCleaning(String roomNumber) {
+        cleaning.performCleaning(roomNumber);
+    }
+}
+
+
+abstract class OrganizationComponent {
+    protected String name;
+
+    public OrganizationComponent(String name) {
+        this.name = name;
+    }
+
+    public abstract void showStructure(String prefix);
+    public abstract double getBudget();
+    public abstract int getEmployeeCount();
+
+    public void add(OrganizationComponent component) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void remove(OrganizationComponent component) {
+        throw new UnsupportedOperationException();
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+
+class Employee extends OrganizationComponent {
+    private String position;
+    private double salary;
+
+    public Employee(String name, String position, double salary) {
+        super(name);
+        this.position = position;
+        this.salary = salary;
+    }
+
+    @Override
+    public void showStructure(String prefix) {
+        System.out.println(prefix + "- 👤 " + name + " (" + position + "), жалақы: " + salary);
+    }
+
+    @Override
+    public double getBudget() {
+        return salary;
+    }
+
+    @Override
+    public int getEmployeeCount() {
+        return 1;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
+    }
+}
+
+class Contractor extends Employee {
+    public Contractor(String name, String position, double salary) {
+        super(name, position, salary);
+    }
+
+    @Override
+    public double getBudget() {
+        return 0; // Контрактор бюджетке кірмейді
+    }
+}
+
+class Department extends OrganizationComponent {
+    private List<OrganizationComponent> components = new ArrayList<>();
+
+    public Department(String name) {
+        super(name);
+    }
+
+    @Override
+    public void add(OrganizationComponent component) {
+        components.add(component);
+    }
+
+    @Override
+    public void remove(OrganizationComponent component) {
+        components.remove(component);
+    }
+
+    @Override
+    public void showStructure(String prefix) {
+        System.out.println(prefix + "🏢 " + name);
+        for (OrganizationComponent c : components) {
+            c.showStructure(prefix + "   ");
+        }
+    }
+
+    @Override
+    public double getBudget() {
+        double total = 0;
+        for (OrganizationComponent c : components) {
+            total += c.getBudget();
+        }
+        return total;
+    }
+
+    @Override
+    public int getEmployeeCount() {
+        int total = 0;
+        for (OrganizationComponent c : components) {
+            total += c.getEmployeeCount();
+        }
+        return total;
+    }
+
+    public OrganizationComponent findEmployee(String name) {
+        for (OrganizationComponent c : components) {
+            if (c.getName().equalsIgnoreCase(name)) {
+                return c;
+            }
+            if (c instanceof Department) {
+                OrganizationComponent found = ((Department) c).findEmployee(name);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    public void listAllEmployees() {
+        System.out.println("📋 Бөлім: " + name);
+        for (OrganizationComponent c : components) {
+            if (c instanceof Employee) {
+                System.out.println("   👤 " + c.getName());
+            } else if (c instanceof Department) {
+                ((Department) c).listAllEmployees();
+            }
+        }
+    }
+}

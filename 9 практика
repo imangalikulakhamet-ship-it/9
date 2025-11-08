@@ -1,0 +1,164 @@
+// DesignPatternsDemo.java
+import java.util.*;
+
+class AudioSystem {
+    public void turnOn() {
+        System.out.println("Аудио жүйесі қосылды.");
+    }
+    public void setVolume(int level) {
+        System.out.println("Дыбыс деңгейі " + level + " деңгейіне орнатылды.");
+    }
+    public void turnOff() {
+        System.out.println("Аудио жүйесі өшірілді.");
+    }
+}
+
+class VideoProjector {
+    public void turnOn() {
+        System.out.println("Видео проектор қосылды.");
+    }
+    public void setResolution(String resolution) {
+        System.out.println("Бейне айырымдылығы " + resolution + " режиміне орнатылды.");
+    }
+    public void turnOff() {
+        System.out.println("Видео проектор өшірілді.");
+    }
+}
+
+
+class LightingSystem {
+    public void turnOn() {
+        System.out.println("Жарық қосылды.");
+    }
+    public void setBrightness(int level) {
+        System.out.println("Жарықтың жарықтығы " + level + " деңгейіне орнатылды.");
+    }
+    public void turnOff() {
+        System.out.println("Жарық өшірілді.");
+    }
+}
+
+
+class HomeTheaterFacade {
+    private AudioSystem audioSystem;
+    private VideoProjector videoProjector;
+    private LightingSystem lightingSystem;
+
+    public HomeTheaterFacade(AudioSystem audio, VideoProjector video, LightingSystem light) {
+        this.audioSystem = audio;
+        this.videoProjector = video;
+        this.lightingSystem = light;
+    }
+
+    public void startMovie() {
+        System.out.println("Фильмді бастауға дайындалуда...");
+        lightingSystem.turnOn();
+        lightingSystem.setBrightness(5);
+        audioSystem.turnOn();
+        audioSystem.setVolume(8);
+        videoProjector.turnOn();
+        videoProjector.setResolution("HD");
+        System.out.println("Фильм басталды!");
+    }
+
+    public void endMovie() {
+        System.out.println("Фильмді тоқтату процесі жүріп жатыр...");
+        videoProjector.turnOff();
+        audioSystem.turnOff();
+        lightingSystem.turnOff();
+        System.out.println("Фильм аяқталды.");
+    }
+}
+
+
+abstract class FileSystemComponent {
+    protected String name;
+
+    public FileSystemComponent(String name) {
+        this.name = name;
+    }
+
+    public abstract void display(int depth);
+
+    public void add(FileSystemComponent component) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void remove(FileSystemComponent component) {
+        throw new UnsupportedOperationException();
+    }
+
+    public FileSystemComponent getChild(int index) {
+        throw new UnsupportedOperationException();
+    }
+}
+
+class FileLeaf extends FileSystemComponent {
+    public FileLeaf(String name) {
+        super(name);
+    }
+    public void display(int depth) {
+        System.out.println("-".repeat(depth) + " Файл: " + name);
+    }
+}
+
+class DirectoryComposite extends FileSystemComponent {
+    private List<FileSystemComponent> children = new ArrayList<>();
+
+    public DirectoryComposite(String name) {
+        super(name);
+    }
+
+    public void add(FileSystemComponent component) {
+        children.add(component);
+    }
+
+    public void remove(FileSystemComponent component) {
+        children.remove(component);
+    }
+
+    public FileSystemComponent getChild(int index) {
+        return children.get(index);
+    }
+
+    public void display(int depth) {
+        System.out.println("-".repeat(depth) + " Қалта: " + name);
+        for (FileSystemComponent component : children) {
+            component.display(depth + 2);
+        }
+    }
+}
+
+public class DesignPatternsDemo {
+    public static void main(String[] args) {
+        System.out.println("===== ФАСАД ПАТТЕРНІ =====");
+
+        AudioSystem audio = new AudioSystem();
+        VideoProjector video = new VideoProjector();
+        LightingSystem lights = new LightingSystem();
+
+        HomeTheaterFacade homeTheater = new HomeTheaterFacade(audio, video, lights);
+        homeTheater.startMovie();
+
+        System.out.println();
+        homeTheater.endMovie();
+
+        System.out.println("\n=============================\n");
+
+        System.out.println("===== КОМПОНОВЩИК ПАТТЕРНІ =====");
+
+        DirectoryComposite root = new DirectoryComposite("Тамыр каталог (Root)");
+        FileLeaf file1 = new FileLeaf("Файл1.txt");
+        FileLeaf file2 = new FileLeaf("Файл2.txt");
+        DirectoryComposite subDir = new DirectoryComposite("Ішкі қалта (SubDirectory)");
+        FileLeaf subFile1 = new FileLeaf("ІшкіФайл1.txt");
+
+        root.add(file1);
+        root.add(file2);
+        subDir.add(subFile1);
+        root.add(subDir);
+
+        System.out.println("\nФайл жүйесінің құрылымы:");
+        root.display(1);
+    }
+}
